@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Álbum Choxi</title>
+<meta name="description" content="Álbum de figuritas con las selfies del grupo.">
+<meta name="theme-color" content="#0a0b0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Álbum Choxi">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icono-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/bodoni-moda-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<p class="nota" id="offline" role="status" hidden><span>Sin conexión: los cambios vuelven cuando haya internet.</span></p>
+<p class="toast" id="toast" role="alert" hidden></p>
+
+<div id="pantalla"><p class="meta centro">Abriendo…</p></div>
+
+<div id="app" hidden>
+  <header class="barra">
+    <h1 id="tit">Álbum de los Lugares</h1>
+    <span class="contador" id="cont"></span>
+    <button class="btn-dis" id="b-modo" aria-pressed="false" hidden>Diseño</button>
+    <button class="btn-ic" id="b-ajustes" aria-label="Ajustes">⚙</button>
+  </header>
+  <div class="prog" aria-hidden="true"><i id="bar"></i></div>
+  <div class="modo" id="modo" hidden>
+    <span>Modo diseño: tocá la tapa, el título de una sección o un lugar para editarlo.</span>
+    <button id="b-paginas">Páginas</button>
+    <button id="b-colores">Colores</button>
+    <button id="b-grupo">Grupo</button>
+  </div>
+
+  <main class="escena" id="escena">
+    <div class="libro" id="libro"></div>
+  </main>
+
+  <section class="cajon" aria-label="Figuritas sin pegar">
+    <button class="asa" id="b-asa" aria-expanded="true" aria-controls="cajon-cuerpo">
+      <span class="tirador" aria-hidden="true"></span>
+      <span class="asa-txt" id="asa-txt">Sin pegar</span>
+      <span class="flechita" aria-hidden="true">▾</span>
+    </button>
+    <div class="cajon-cuerpo" id="cajon-cuerpo"><div class="interior">
+      <p class="guia" id="guia"></p>
+      <div class="mano">
+        <button class="cargar" id="b-cargar"><span aria-hidden="true">+</span>Cargar fotos</button>
+        <div class="tira" id="tira"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <nav class="nav" aria-label="Páginas">
+    <button class="flecha" id="ant" aria-label="Página anterior">‹</button>
+    <div class="puntos" id="puntos"></div>
+    <button class="flecha" id="sig" aria-label="Página siguiente">›</button>
+  </nav>
+</div>
+
+<div id="modal"></div>
+<div id="capa"></div>
+
+<script src="js/config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="js/reglas.js"></script>
+<script src="js/api.js"></script>
+<script src="js/fotos.js"></script>
+<script src="js/estado.js"></script>
+<script src="js/vistas.js"></script>
+<script src="js/arrastre.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
