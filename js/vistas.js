@@ -296,7 +296,12 @@
     $('b-cerrar').onclick = cerrar;
     if ($('b-guardar')) $('b-guardar').onclick = () => { guardar(); cerrar(); };
     if (f) {
-      Api.firmar([f.foto_path]).then(() => { const g = $('grande'); if (g) g.style.backgroundImage = `url('${Api.verUrl(f.foto_path)}')`; }).catch(() => {});
+      // Se ve la miniatura hasta que termina de bajar la foto grande.
+      Api.firmar([f.foto_path]).then(() => {
+        const u = Api.verUrl(f.foto_path), im = new Image();
+        im.onload = () => { const g = $('grande'); if (g) g.style.backgroundImage = `url('${u}')`; };
+        im.src = u;
+      }).catch(() => {});
       $('b-despegar').onclick = () => confirmar(`¿Despegar la figurita ${n}? Vuelve abajo, a las figuritas sin pegar.`, 'Despegar',
         () => { cerrar(); intentar(S.despegar(f.id)); });
     }

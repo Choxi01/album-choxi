@@ -25,7 +25,8 @@
   const apodo = uid => { const m = E.miembros.find(x => x.user_id === uid); return m ? m.apodo : 'alguien que ya no está'; };
   const fig = id => E.figuritas.find(f => f.id === id);
   const miniPath = f => f.foto_path.replace(/\.jpg$/, '_t.jpg');
-  const porFecha = (a, b) => (a.created_at || '').localeCompare(b.created_at || '');
+  // Las figuritas de un mismo sobre tienen la misma hora: se desempata por id para que el orden sea igual en todos los celus.
+  const porFecha = (a, b) => (a.created_at || '').localeCompare(b.created_at || '') || a.id.localeCompare(b.id);
   const abierto = sid => { const s = E.sobres.find(x => x.id === sid); return s && s.abierto_at; };
   const mano = () => E.figuritas.filter(f => !f.lugar_id && abierto(f.sobre_id)).sort(porFecha);
   // Los sobres vacíos (todavía subiendo) no se muestran, así nadie abre uno a medio armar.
