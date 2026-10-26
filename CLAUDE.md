@@ -25,7 +25,8 @@
 Tema único de noche, tokens en `:root` de `estilos.css` (mesa `#0a0b0f`, hoja `#14151b`, acento `#c9a96e` y tapa `#111217` editables). Botones ≥44 px (los puntitos de página son 32×44), zonas seguras, `prefers-reduced-motion`, confirmaciones dentro de la pantalla (sin `alert`/`confirm`).
 
 ## Estado
-V1 escrita. Ingreso por mail probado (el mail sale y el link entra). Falta la prueba completa en celu (crear álbum, sobre, pegar, segunda sesión en vivo).
+V1 escrita y probada contra el Supabase real (26/10/2026): crear álbum, sobre con 2 fotos (rotación EXIF ok), abrir, pegar arrastrando, detalle, despegar, editar destino, rechazo del servidor con vuelta atrás, borrar página → comodín, reordenar, nuevo código, apodo, tirar figurita (borra archivos), expulsión. En vivo probado con dos pestañas de la misma cuenta.
+Sin probar todavía: unirse con código desde **otra cuenta** (necesita SMTP propio en Supabase), la app instalada en iPhone/Android y el modo sin conexión (el service worker solo corre fuera de localhost).
 
 ## Pendientes (fuera de la V1)
 - Notificaciones cuando llega un sobre.
