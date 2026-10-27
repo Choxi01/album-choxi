@@ -1,0 +1,277 @@
+<title>Figurita como post</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: página del álbum de fondo; al tocar una figurita se abre un post a pantalla completa (columna de 430px máx). Tema único de noche. */
+:root{
+  --mesa:#0a0b0f; --hoja:#14151b; --hueco:#1b1d25; --linea:#2d303c;
+  --tinta:#ece7dc; --apagado:#9894a0; --acento:#c9a96e; --pagina:#7e3139;
+  --f-display:"Bodoni Moda",Didot,Georgia,serif;
+  --f-label:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--mesa);color:var(--tinta);font-family:var(--f-body);font-size:15px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;align-items:center}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* Página del álbum (fondo) */
+.top{width:100%;max-width:430px;padding-block:14px 8px;display:flex;align-items:baseline;gap:10px}
+.top h1{font-family:var(--f-display);font-style:italic;font-weight:500;font-size:19px;margin:0;flex:1}
+.top span{font-family:var(--f-label);font-weight:600;letter-spacing:.1em;color:var(--apagado);font-size:13px;text-transform:uppercase}
+.nota{width:100%;max-width:430px;font-size:13px;color:var(--apagado);margin:0 0 10px;line-height:1.4}
+.nota b{color:var(--acento);font-weight:600}
+.hoja{width:100%;max-width:430px;background:var(--hoja);border-radius:3px 8px 8px 3px;box-shadow:0 0 0 1px #000,0 24px 50px rgba(0,0,0,.6);overflow:hidden;margin-bottom:24px}
+.cab{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;background:linear-gradient(180deg,var(--pagina),color-mix(in srgb,var(--pagina),#000 45%));border-bottom:1px solid color-mix(in srgb,var(--acento) 40%,transparent)}
+.cab .num{font-family:var(--f-display);font-style:italic;font-size:30px;color:var(--acento);line-height:.9}
+.cab h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0;line-height:1.05}
+.cab p{margin:3px 0 0;font-family:var(--f-label);font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.cab .tot{margin-left:auto;font-family:var(--f-label);font-weight:700;font-size:14px;border:1px solid rgba(255,255,255,.35);padding:3px 8px;border-radius:2px}
+.grilla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 14px 14px}
+.figu{aspect-ratio:5/4;background:#1e2029;border:1px solid #33363f;border-radius:4px;padding:4px 4px 0;display:flex;flex-direction:column;box-shadow:0 6px 14px rgba(0,0,0,.55);text-align:left;transition:transform .15s;position:relative}
+.figu:hover{transform:translateY(-2px)}
+.figu .foto{flex:1;border-radius:2px;background:#2a2d36 center/cover}
+.figu .pl{display:flex;align-items:center;gap:6px;padding:5px 2px 6px}
+.n{font-family:var(--f-label);font-weight:700;font-size:12px;background:var(--pagina);color:#f4efe4;padding:1px 5px;border-radius:2px;font-variant-numeric:tabular-nums}
+.figu .t{font-family:var(--f-label);font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.burbuja{position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:4px;background:rgba(10,11,15,.75);border-radius:10px;padding:2px 7px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.burbuja svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.hueco{aspect-ratio:5/4;border:1px dashed var(--linea);border-radius:4px;background:var(--hueco);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:6px}
+.hueco i{font-style:normal;font-family:var(--f-label);font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+.hueco small{color:var(--apagado);font-size:12px}
+
+/* Post */
+.post{position:fixed;inset:0;z-index:20;background:var(--mesa);display:flex;justify-content:center;animation:sube .28s cubic-bezier(.2,.8,.3,1)}
+@keyframes sube{from{transform:translateY(30px);opacity:0}}
+.col{width:100%;max-width:430px;display:flex;flex-direction:column;min-height:0;height:100%;padding-top:env(safe-area-inset-top,0px)}
+.barra{display:flex;align-items:center;gap:6px;padding:8px max(8px,env(safe-area-inset-right,0px)) 8px max(8px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--linea)}
+.ic{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;flex:0 0 auto}
+.ic:hover{background:rgba(255,255,255,.05)}
+.ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.barra .titulo{flex:1;min-width:0;text-align:center;font-family:var(--f-label);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--apagado)}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.autor{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-label);font-weight:700;font-size:15px;color:#0a0b0f;flex:0 0 auto}
+.autor .q{flex:1;min-width:0;line-height:1.2}
+.autor small{color:var(--apagado);font-size:13px}
+.lugar{display:block;font-family:var(--f-label);font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase}
+
+.foto-wrap{position:relative;width:100%;background:#000;display:flex;justify-content:center;align-items:center;min-height:200px;touch-action:pan-y;user-select:none}
+.foto-wrap .marco-foto{position:relative;display:block;line-height:0}
+.foto-wrap img{display:block;max-width:100%;max-height:calc(100dvh - 230px);width:auto;height:auto;-webkit-user-drag:none}
+.foto-wrap .plate{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:6px;background:rgba(10,11,15,.72);padding:4px 8px 4px 4px;border-radius:3px;border:1px solid color-mix(in srgb,var(--acento) 45%,transparent)}
+.foto-wrap .plate span:last-child{font-family:var(--f-label);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.flecha{position:absolute;top:50%;width:36px;height:36px;margin-top:-18px;border-radius:50%;background:rgba(10,11,15,.6);display:grid;place-items:center;color:var(--tinta)}
+.flecha.izq{left:8px}.flecha.der{right:8px}
+.flecha svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+.puntos{display:flex;justify-content:center;gap:5px;padding-top:10px}
+.puntos i{width:6px;height:6px;border-radius:50%;background:var(--linea)}
+.puntos i.on{background:var(--acento)}
+
+.texto{padding:12px 14px 0}
+.caption{margin:0 0 6px;line-height:1.45;overflow-wrap:anywhere}
+.caption b,.com b{font-weight:600;margin-right:5px}
+.caption .editar{margin-left:6px}
+.meta{font-size:13px;color:var(--apagado);margin:0}
+.link{color:var(--apagado);font-size:13px;text-decoration:underline;text-underline-offset:2px}
+.agregar{color:var(--acento);font-size:14px;font-weight:600;margin:0 0 6px;display:inline-block}
+.editor{display:flex;flex-direction:column;gap:8px;margin:0 0 8px}
+.editor textarea{width:100%;min-height:72px;resize:vertical;border:1px solid var(--linea);border-radius:8px;background:#111218;color:var(--tinta);padding:10px 12px;font:inherit;font-size:16px;line-height:1.4}
+.editor textarea:focus{outline:none;border-color:var(--acento)}
+.editor .fila{display:flex;align-items:center;gap:8px}
+.editor .cuenta{margin-right:auto;font-size:12px;color:var(--apagado);font-variant-numeric:tabular-nums}
+.btn{min-height:38px;padding:0 14px;border-radius:6px;border:1px solid var(--linea);font-family:var(--f-label);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.btn.pri{background:var(--acento);border-color:var(--acento);color:#0a0b0f}
+.sep{height:1px;background:var(--linea);margin:14px 14px 12px}
+.coms{padding:0 14px 16px;display:flex;flex-direction:column;gap:14px}
+.coms h3{margin:0;font-family:var(--f-label);font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--apagado)}
+.com{display:flex;gap:10px;align-items:flex-start}
+.com .av{width:30px;height:30px;font-size:13px}
+.com .cuerpo{flex:1;min-width:0;line-height:1.4;overflow-wrap:anywhere}
+.com .sub{display:flex;gap:12px;margin-top:3px;font-size:12px;color:var(--apagado)}
+.com .sub button{font-size:12px;color:var(--apagado);font-weight:600}
+.com.nuevo{animation:entra .35s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}}
+.vacio{color:var(--apagado);font-size:14px;margin:0}
+
+.pie{border-top:1px solid var(--linea);padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--mesa)}
+.escribir{display:flex;align-items:center;gap:10px}
+.escribir input{flex:1;min-width:0;min-height:44px;border:1px solid var(--linea);border-radius:22px;background:#111218;color:var(--tinta);padding:0 16px;font:inherit;font-size:16px}
+.escribir input:focus{outline:none;border-color:var(--acento)}
+.publicar{font-weight:600;color:var(--acento);min-height:44px;padding:0 6px}
+.publicar:disabled{opacity:.35;cursor:default}
+
+/* Menú ⋯ */
+.menu{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.hoja-menu{width:100%;max-width:430px;background:#16171e;border:1px solid var(--linea);border-bottom:0;border-radius:14px 14px 0 0;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));animation:sube .22s}
+.hoja-menu button{display:block;width:100%;text-align:center;min-height:52px;font-size:15px;border-bottom:1px solid var(--linea)}
+.hoja-menu button:last-child{border-bottom:0}
+.hoja-menu .peligro{color:#e0705f;font-weight:600}
+.hoja-menu p{margin:10px 20px 14px;text-align:center;color:var(--apagado);font-size:14px;line-height:1.4}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:#24262f;border:1px solid var(--linea);padding:10px 16px;border-radius:20px;font-size:14px;animation:entra .25s;max-width:calc(100% - 32px);text-align:center}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top"><h1>Momentos with Friends</h1><span>Pág. 1</span></header>
+<p class="nota">Demo (la página del álbum queda como está en la app): tocá una figurita para abrirla y ver la foto entera. Probá <b>comentar</b>, <b>editar la descripción</b> de las tuyas (Choxi), deslizar a la siguiente y el menú <b>⋯</b>.</p>
+<section class="hoja" aria-label="Página 1">
+  <div class="cab"><span class="num">01</span><div><h2>Boliches de Mierda</h2><p>Lugar malo, gente buena</p></div><span class="tot">3/6</span></div>
+  <div class="grilla" id="grilla"></div>
+</section>
+
+<div id="post"></div>
+<div id="capa"></div>
+
+<script>
+(function(){
+const YO={id:'u1',apodo:'Choxi',color:'#c9a96e'};
+const GENTE={u1:YO,u2:{id:'u2',apodo:'marselo',color:'#8fb3e8'},u3:{id:'u3',apodo:'Balti',color:'#9fd3a8'},u4:{id:'u4',apodo:'Tati',color:'#e8a0b8'}};
+function foto(a,b,c,W=600,H=750){const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+  const g=x.createRadialGradient(W/2,H*.23,20,W/2,H*.43,Math.max(W,H)*.9);g.addColorStop(0,b);g.addColorStop(1,a);x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.translate((W-600)/2,H-750);
+  let s=c;const r=()=>(s=(s*9301+49297)%233280)/233280;
+  for(let i=0;i<26;i++){x.fillStyle=`rgba(255,235,200,${.06+r()*.22})`;x.beginPath();x.arc(r()*W-(W-600)/2,r()*300-(H-750)*.5,6+r()*26,0,7);x.fill()}
+  [[130,430,'#e8c09a'],[300,395,'#b9845c'],[470,440,'#86583a']].forEach(([cx,cy,col])=>{
+    x.fillStyle='rgba(0,0,0,.5)';x.beginPath();x.ellipse(cx,cy+250,120,190,0,0,7);x.fill();
+    x.fillStyle=col;x.beginPath();x.arc(cx,cy,74,0,7);x.fill();
+    x.fillStyle='#16110d';x.beginPath();x.arc(cx-24,cy-8,8,0,7);x.arc(cx+24,cy-8,8,0,7);x.fill();
+    x.strokeStyle='#16110d';x.lineWidth=6;x.beginPath();x.arc(cx,cy+16,28,.2,Math.PI-.2);x.stroke()});
+  return cv.toDataURL('image/jpeg',.82)}
+const ahora=Date.now(),h=36e5;
+const POSTS=[
+  {n:1,lugar:'512',zona:'Carmelitas',src:foto('#2a0f22','#d38bb0',7),subio:'u1',pego:'u2',fecha:'26 de octubre',
+   caption:'La previa más larga de la historia',
+   coms:[{id:1,u:'u2',t:'Esa noche no la cuento ni a mi abogado',hace:ahora-5*h},{id:2,u:'u3',t:'Volvemos el viernes',hace:ahora-4*h},{id:3,u:'u4',t:'¿Dónde estaba yo? 😭',hace:ahora-2*h}]},
+  {n:2,lugar:'Kingfish',zona:'Carmelitas',src:foto('#0f1a33','#7f8fd0',3,900,620),subio:'u1',pego:'u2',fecha:'26 de octubre',
+   caption:'',coms:[{id:4,u:'u4',t:'Foto oficial del grupo, que no se discuta',hace:ahora-20*h}]},
+  {n:4,lugar:'Colombo',zona:'Carmelitas',src:foto('#2b1a0e','#e0a35c',11,600,1000),subio:'u3',pego:'u3',fecha:'19 de octubre',
+   caption:'Cumple de Balti 🍻',coms:[]}
+];
+const VACIOS={3:['Wynwood','Asunción'],5:['Kilkenny','Algún lado'],6:['Boticario','A explorar']};
+const MAX_DESC=280;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ICON={
+  atras:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  mas:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+  globo:'<svg viewBox="0 0 24 24"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3.5 20l1.2-4.1A8.5 8.5 0 1 1 20.5 11.5z"/></svg>',
+  izq:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  der:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>'};
+function hace(ms){const m=Math.round((Date.now()-ms)/6e4);if(m<1)return 'recién';if(m<60)return `hace ${m} min`;const hh=Math.round(m/60);if(hh<24)return `hace ${hh} h`;return `hace ${Math.round(hh/24)} d`}
+const av=u=>`<span class="av" style="background:${GENTE[u].color}" aria-hidden="true">${esc(GENTE[u].apodo[0].toUpperCase())}</span>`;
+const $=id=>document.getElementById(id);
+
+/* Página */
+function pintarGrilla(){
+  let html='';
+  for(let n=1;n<=6;n++){const p=POSTS.find(x=>x.n===n);
+    if(p)html+=`<button class="figu" data-n="${n}" aria-label="Abrir figurita ${n}: ${esc(p.lugar)}${p.coms.length?`, ${p.coms.length} comentarios`:''}">
+      <span class="foto" style="background-image:url(${p.src})"></span>
+      ${p.coms.length?`<span class="burbuja">${ICON.globo}${p.coms.length}</span>`:''}
+      <span class="pl"><span class="n">${n}</span><span class="t">${esc(p.lugar)}</span></span></button>`;
+    else html+=`<div class="hueco"><small>${n}</small><i>${esc(VACIOS[n][0])}</i><small>${esc(VACIOS[n][1])}</small></div>`}
+  $('grilla').innerHTML=html;
+}
+$('grilla').onclick=e=>{const b=e.target.closest('[data-n]');if(b){idx=POSTS.findIndex(p=>p.n===+b.dataset.n);editando=false;render(true)}};
+
+/* Post */
+const raiz=$('post');let idx=0,nuevoCom=null,editando=false;
+function bloqueDescripcion(p){
+  const mia=p.subio===YO.id;
+  if(editando)return `<div class="editor"><textarea id="in-desc" maxlength="${MAX_DESC}" aria-label="Descripción de la foto" placeholder="Contá algo de esta salida…">${esc(p.caption)}</textarea>
+    <div class="fila"><span class="cuenta" id="cuenta">${p.caption.length}/${MAX_DESC}</span><button class="btn" id="b-cancelar">Cancelar</button><button class="btn pri" id="b-guardar">Guardar</button></div></div>`;
+  if(p.caption)return `<p class="caption"><b>${esc(GENTE[p.subio].apodo)}</b>${esc(p.caption)}${mia?` <button class="link editar" id="b-editar">Editar</button>`:''}</p>`;
+  return mia?`<button class="agregar" id="b-editar">+ Agregar una descripción</button>`:'';
+}
+function render(primera){
+  const p=POSTS[idx];
+  raiz.innerHTML=`<div class="post" role="dialog" aria-modal="true" aria-label="Figurita ${p.n}: ${esc(p.lugar)}" ${primera?'':'style="animation:none"'}>
+   <div class="col">
+    <div class="barra">
+      <button class="ic" id="b-cerrar" aria-label="Volver al álbum">${ICON.atras}</button>
+      <span class="titulo">Figurita N.º ${p.n}</span>
+      <button class="ic" id="b-menu" aria-label="Más opciones">${ICON.mas}</button>
+    </div>
+    <div class="scroll" id="scroll">
+      <div class="autor">${av(p.subio)}<div class="q"><b class="lugar">${esc(p.lugar)}</b><small>${esc(p.zona)} · Pág. 1 · Boliches de Mierda</small></div></div>
+      <div class="foto-wrap" id="foto" aria-label="Foto en ${esc(p.lugar)}">
+        <span class="marco-foto"><img src="${p.src}" alt="Foto en ${esc(p.lugar)}">
+        <span class="plate" style="line-height:1"><span class="n">${p.n}</span><span>${esc(p.lugar)}</span></span></span>
+        ${idx>0?`<button class="flecha izq" id="b-ant" aria-label="Figurita anterior">${ICON.izq}</button>`:''}
+        ${idx<POSTS.length-1?`<button class="flecha der" id="b-sig" aria-label="Figurita siguiente">${ICON.der}</button>`:''}
+      </div>
+      <div class="puntos" aria-hidden="true">${POSTS.map((_,i)=>`<i class="${i===idx?'on':''}"></i>`).join('')}</div>
+      <div class="texto">
+        ${bloqueDescripcion(p)}
+        <p class="meta">Subida por ${esc(GENTE[p.subio].apodo)} · Pegada por ${esc(GENTE[p.pego].apodo)} · ${esc(p.fecha)}</p>
+      </div>
+      <div class="sep"></div>
+      <div class="coms">
+        <h3>${p.coms.length?`${p.coms.length} ${p.coms.length===1?'comentario':'comentarios'}`:'Comentarios'}</h3>
+        ${p.coms.length?p.coms.map(c=>`<div class="com${c.id===nuevoCom?' nuevo':''}">${av(c.u)}<div class="cuerpo"><b>${esc(GENTE[c.u].apodo)}</b>${esc(c.t)}
+          <div class="sub"><span>${hace(c.hace)}</span>${c.u===YO.id?`<button data-borrar="${c.id}">Borrar</button>`:''}</div></div></div>`).join('')
+          :'<p class="vacio">Todavía nadie comentó. Arrancá vos.</p>'}
+      </div>
+    </div>
+    <div class="pie">
+      <form class="escribir" id="form">${av(YO.id)}
+        <input id="in-com" type="text" maxlength="300" placeholder="Comentá como ${esc(YO.apodo)}…" aria-label="Escribir un comentario" autocomplete="off">
+        <button class="publicar" id="b-pub" type="submit" disabled>Publicar</button></form>
+    </div>
+   </div></div>`;
+  nuevoCom=null;enlazar();
+}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1900)}
+function comentar(t){t=t.trim();if(!t)return;const p=POSTS[idx];const id=Date.now();p.coms.push({id,u:YO.id,t,hace:Date.now()});nuevoCom=id;
+  render(false);pintarGrilla();const s=$('scroll');s.scrollTop=s.scrollHeight}
+function ir(d){const n=idx+d;if(n<0||n>=POSTS.length)return;idx=n;editando=false;render(false);$('scroll').scrollTop=0}
+function enlazar(){
+  $('b-cerrar').onclick=cerrar;
+  $('b-menu').onclick=menu;
+  if($('b-ant'))$('b-ant').onclick=()=>ir(-1);
+  if($('b-sig'))$('b-sig').onclick=()=>ir(1);
+  if($('b-editar'))$('b-editar').onclick=()=>{editando=true;const y=$('scroll').scrollTop;render(false);$('scroll').scrollTop=y;const t=$('in-desc');t.focus();t.setSelectionRange(t.value.length,t.value.length)};
+  if($('in-desc')){
+    $('in-desc').oninput=e=>$('cuenta').textContent=`${e.target.value.length}/${MAX_DESC}`;
+    $('b-cancelar').onclick=()=>{editando=false;const y=$('scroll').scrollTop;render(false);$('scroll').scrollTop=y};
+    $('b-guardar').onclick=()=>{POSTS[idx].caption=$('in-desc').value.trim();editando=false;const y=$('scroll').scrollTop;render(false);$('scroll').scrollTop=y;toast('Descripción guardada')};
+  }
+  let x0=null,y0=null;const f=$('foto');
+  f.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  f.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))ir(dx<0?1:-1);x0=null},{passive:true});
+  const inp=$('in-com');
+  inp.oninput=()=>$('b-pub').disabled=!inp.value.trim();
+  $('form').onsubmit=e=>{e.preventDefault();comentar(inp.value)};
+  document.querySelectorAll('[data-borrar]').forEach(b=>b.onclick=()=>{const p=POSTS[idx];p.coms=p.coms.filter(c=>c.id!==+b.dataset.borrar);const y=$('scroll').scrollTop;render(false);$('scroll').scrollTop=y;pintarGrilla()});
+}
+function menu(){
+  const capa=$('capa');
+  capa.innerHTML=`<div class="menu" id="velo"><div class="hoja-menu" role="dialog" aria-label="Opciones">
+    <button id="m-gastos">Ver gastos de esta salida</button>
+    <button id="m-desp" class="peligro">Despegar figurita</button>
+    <button id="m-no">Cancelar</button></div></div>`;
+  const cerrarM=()=>capa.innerHTML='';
+  $('velo').onclick=e=>{if(e.target.id==='velo')cerrarM()};
+  $('m-no').onclick=cerrarM;
+  $('m-gastos').onclick=()=>{cerrarM();toast('En la app: abre la cuenta enlazada en Cuentas')};
+  $('m-desp').onclick=()=>{capa.querySelector('.hoja-menu').innerHTML=`<p>La figurita vuelve abajo, a "Sin pegar". La descripción y los comentarios se mantienen.</p>
+    <button id="m-si" class="peligro">Despegar</button><button id="m-no2">Cancelar</button>`;
+    $('m-no2').onclick=cerrarM;$('m-si').onclick=()=>{cerrarM();toast('En la app: la figurita vuelve al cajón')}};
+}
+function cerrar(){raiz.innerHTML='';$('capa').innerHTML=''}
+document.addEventListener('keydown',e=>{if(!raiz.innerHTML)return;
+  if(e.key==='Escape'){if($('capa').innerHTML)$('capa').innerHTML='';else cerrar()}
+  const a=document.activeElement;if(a&&(a.id==='in-com'||a.id==='in-desc'))return;
+  if(e.key==='ArrowRight')ir(1);if(e.key==='ArrowLeft')ir(-1)});
+
+pintarGrilla();
+})();
+</script>
