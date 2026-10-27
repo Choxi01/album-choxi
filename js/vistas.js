@@ -15,7 +15,7 @@
 
   // Estado de la interfaz (compartido con arrastre.js)
   const UI = { actual: 0, animando: false, pendiente: false, modoDis: false, sel: null, arrastrando: false,
-    alSalir: () => {}, alCambiarAlbum: null };
+    alSalir: () => {}, alCambiarAlbum: null, abrirAlbum: null, resaltar: null };
 
   const A = () => E.a, secs = () => A().secciones, nSec = () => secs().length, nPag = () => nSec() + 1;
   const et = f => R.etiqueta(A(), f, S.D().acento);
@@ -42,9 +42,16 @@
   function login() {
     let email = '', espera = 0, reloj = null;
     const paso1 = (error) => {
-      pantalla(`<h4 id="ph">Álbum Choxi</h4><div class="meta">Entrá con tu mail. Te mandamos un link y un código, sin contraseña.</div>
+      pantalla(`<h4 id="ph">Álbum Choxi</h4>
+        <button class="btn pri google" id="l-google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="currentColor" opacity=".8" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="currentColor" opacity=".6" d="M6.4 14a6 6 0 0 1 0-3.9V7.5H3.1a10 10 0 0 0 0 9z"/><path fill="currentColor" opacity=".9" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.5L6.4 10C7.2 7.8 9.4 6 12 6z"/></svg>Entrar con Google</button>
+        <div class="sub">Entrar con mi mail</div><div class="meta">Te mandamos un link y un código, sin contraseña.</div>
         <form id="f" class="lista"><label for="l-mail">Tu mail<input type="email" id="l-mail" autocomplete="email" inputmode="email" required value="${esc(email)}"></label>
-        <button class="btn pri" id="l-env">Mandame el código</button></form><p class="aviso" id="l-av"${error ? '' : ' hidden'}>${esc(error || '')}</p>`);
+        <button class="btn" id="l-env">Mandame el código</button></form><p class="aviso" id="l-av"${error ? '' : ' hidden'}>${esc(error || '')}</p>`);
+      $('l-google').onclick = async () => {
+        $('l-google').disabled = true;
+        try { await Api.entrarConGoogle(); } // va a Google y vuelve a esta misma página
+        catch (err) { $('l-google').disabled = false; $('l-av').hidden = false; $('l-av').textContent = err.message; }
+      };
       $('f').onsubmit = async e => {
         e.preventDefault(); email = val('l-mail').toLowerCase(); if (!email) return;
         $('l-env').disabled = true;
@@ -93,11 +100,16 @@
     $('b-crear').onclick = () => hacer(ap => Api.rpc('crear_album', { p_apodo: ap }));
   }
 
-  function elegirAlbum(lista, alElegir) {
+  // todos: lista de panel_albumes (solo el dueño de la app), para entrar a cualquiera aunque no sea miembro
+  function elegirAlbum(lista, alElegir, todos) {
+    const mios = new Set(lista.map(m => m.album_id));
+    const otros = (todos || []).filter(a => !mios.has(a.album_id));
     pantalla(`<h4 id="ph">Tus álbumes</h4><div class="lista">${lista.map(m => {
       const d = Object.assign({}, S.DIS, m.albumes && m.albumes.diseno);
       return `<button class="item" data-a="${m.album_id}"><i class="sw" style="background:${esc(d.acento)}"></i><span class="nom"><b>${esc(d.titulo)}</b><small>${esc(d.nombre)} · ${esc(m.apodo)}</small></span></button>`;
-    }).join('')}</div>`);
+    }).join('') || '<p class="meta">No sos miembro de ningún álbum.</p>'}</div>
+    ${otros.length ? `<div class="sub">Todos los álbumes</div><div class="lista">${otros.map(a =>
+      `<button class="item" data-a="${a.album_id}"><i class="sw" style="background:var(--apagado)"></i><span class="nom"><b>${esc(a.titulo || 'Sin título')}</b><small>${esc(a.grupo || '')} · ${a.miembros} miembros · ${esc(a.creador || '')}</small></span></button>`).join('')}</div>` : ''}`);
     $('pantalla').querySelectorAll('[data-a]').forEach(b => b.onclick = () => alElegir(b.dataset.a));
   }
 
@@ -106,7 +118,8 @@
     $('pantalla').hidden = true; $('pantalla').innerHTML = ''; $('app').hidden = false;
     UI.actual = 0; UI.sel = null; UI.modoDis = false;
     $('b-modo').setAttribute('aria-pressed', 'false'); $('modo').hidden = true;
-    pintar();
+    VistaCuentas.reiniciar(); VistaGrupo.reiniciar();
+    Pestanas.ir('album');
   }
 
   function aplicar() {
@@ -140,12 +153,12 @@
       const n = R.numero(A(), l.id), f = S.pegadaEn(l.id);
       if (f) {
         hechas++;
-        return `<button class="figu${s.brillante ? ' brillante' : ''}${recien === l.id ? ' recien' : ''}" style="--c:${s.color};--r:${rot(n)}deg" data-id="${l.id}" aria-label="Figurita ${n}: ${esc(l.nombre || 'sin nombre')}">
+        return `<button class="figu${s.brillante ? ' brillante' : ''}${recien === l.id ? ' recien' : ''}${UI.resaltar === l.id ? ' resaltado' : ''}" style="--c:${s.color};--r:${rot(n)}deg" data-id="${l.id}" aria-label="Figurita ${n}: ${esc(l.nombre || 'sin nombre')}">
           <span class="foto" style="${bg(mini(f))}"></span>
           <span class="pl"><span class="n">${n}</span><span class="t">${esc(l.nombre || 'Sin nombre')}</span></span></button>`;
       }
       const sin = !l.nombre, marca = cs ? (puede(cs, l.id) ? ' destino' : ' apagar') : '';
-      return `<button class="hueco${sin ? ' sin' : ''}${marca}" data-id="${l.id}" style="--c:${s.color}" aria-label="Lugar vacío ${n}: ${esc(l.nombre || 'sin nombre')}">
+      return `<button class="hueco${sin ? ' sin' : ''}${marca}${UI.resaltar === l.id ? ' resaltado' : ''}" data-id="${l.id}" style="--c:${s.color}" aria-label="Lugar vacío ${n}: ${esc(l.nombre || 'sin nombre')}">
         <span class="n">${n}</span><span class="logo">${sin ? '+' : esc(R.iniciales(l.nombre))}</span>
         <span class="lug">${sin ? (UI.modoDis ? 'Ponerle nombre' : 'Por definir') : esc(l.nombre)}</span>${l.detalle ? `<span class="zona">${esc(l.detalle)}</span>` : ''}</button>`;
     }).join('');
@@ -286,6 +299,7 @@
       ${dis ? `<div class="sub">Modo diseño</div>${campo('in-lugar', 'Nombre del lugar', l.nombre, 40, 'Ej: Costanera')}${campo('in-zona', 'Detalle', l.detalle, 40, 'Ej: Asunción')}` : ''}
       ${f ? '' : ok.length ? `<div class="sub">Podés pegar acá</div><div class="tira" style="min-height:0">${ok.map(c => miniHTML(c, 'data-pegar')).join('')}</div>`
         : `<p class="meta" style="margin:0">No hay figuritas sin pegar para este lugar. Cargá fotos con el botón + para armar un sobre.</p>`}
+      ${gastosDeLugar(lid)}
       <div class="acciones">
         ${dis ? '<button class="btn" id="b-guardar">Guardar</button>' : ''}
         ${f ? '<button class="btn peligro" id="b-despegar">Despegar</button>' : ''}
@@ -294,6 +308,8 @@
     const guardar = () => dis && intentar(S.guardarLugar(lid, { nombre: val('in-lugar'), detalle: val('in-zona') }));
     modal().querySelectorAll('[data-pegar]').forEach(b => b.onclick = () => { guardar(); cerrar(); pegar(b.dataset.pegar, lid); });
     $('b-cerrar').onclick = cerrar;
+    modal().querySelectorAll('[data-cuenta]').forEach(b => b.onclick = () => { cerrar(); VistaCuentas.abrirCuenta(b.dataset.cuenta); });
+    if ($('b-gastos')) $('b-gastos').onclick = () => { cerrar(); VistaCuentas.salidaDeLugar(lid); };
     if ($('b-guardar')) $('b-guardar').onclick = () => { guardar(); cerrar(); };
     if (f) {
       // Se ve la miniatura hasta que termina de bajar la foto grande.
@@ -305,6 +321,24 @@
       $('b-despegar').onclick = () => confirmar(`¿Despegar la figurita ${n}? Vuelve abajo, a las figuritas sin pegar.`, 'Despegar',
         () => { cerrar(); intentar(S.despegar(f.id)); });
     }
+  }
+
+  // Salidas de Cuentas enlazadas a este lugar
+  function gastosDeLugar(lid) {
+    const cs = Cuentas.deLugar(lid);
+    if (!cs.length) return '<button class="btn" id="b-gastos">Cargar gastos de esta salida</button>';
+    const total = cs.reduce((t, c) => t + Cuentas.total(c), 0);
+    return `<div class="sub">Gastos de esta salida · ${esc(Formato.gs(total))}</div><div class="lista">${cs.map(c =>
+      `<button class="item" data-cuenta="${c.id}"><span class="nom"><b>${esc(c.nombre)}</b><small>${esc(Formato.gs(Cuentas.total(c)))} · ${c.gastos.length} ${c.gastos.length === 1 ? 'gasto' : 'gastos'}</small></span><span class="codigo">Ver cuenta ›</span></button>`).join('')}</div>`;
+  }
+
+  // "Ver en el álbum" desde una cuenta: va a la página del lugar y lo resalta un rato
+  function verLugar(lid) {
+    const r = R.buscar(A(), lid); if (!r) return;
+    Pestanas.ir('album');
+    UI.resaltar = lid; clearTimeout(verLugar.t);
+    verLugar.t = setTimeout(() => { UI.resaltar = null; pintar(); }, 3000);
+    if (UI.actual === r.si + 1) pintar(); else irA(r.si + 1);
   }
 
   function editarTapa() {
@@ -404,57 +438,6 @@
       pags.forEach((s, i) => { $('c-s' + i).value = S.COLORES[i % S.COLORES.length]; });
       vivo(); guardar();
     });
-  }
-
-  function grupo() {
-    cerrar();
-    const link = location.origin + location.pathname + '?codigo=' + E.album.codigo, dueno = S.esDueno();
-    panel(`<h4 id="ph">Grupo</h4><div class="meta">Mandales este link para que se sumen.</div>
-      <label for="g-link">Link de invitación<input type="text" id="g-link" readonly value="${esc(link)}"></label>
-      <div class="acciones"><button class="btn pri" id="g-copiar">Copiar</button><button class="btn" id="g-nuevo">Nuevo código</button></div>
-      <div class="meta">Código: <b class="codigo">${esc(E.album.codigo)}</b></div>
-      <div id="conf"></div>
-      <div class="sub">Miembros (${E.miembros.length})</div>
-      ${dueno ? '<div class="meta">Como dueño del álbum, sos el único que puede dar y quitar admins.</div>' : ''}
-      <div class="lista">${E.miembros.slice().sort((a, b) => a.apodo.localeCompare(b.apodo)).map(m => {
-        const otro = m.user_id !== E.uid, admin = m.rol === 'admin';
-        // Mismas reglas que el servidor: al dueño no lo saca nadie y a un admin solo lo saca el dueño.
-        const sacable = otro && !S.esDueno(m.user_id) && (!admin || dueno);
-        return `<div class="item">
-        <div class="nom"><b>${esc(m.apodo)}${otro ? '' : ' (vos)'}</b><small>${S.esDueno(m.user_id) ? 'Dueño · Admin' : admin ? 'Admin' : 'Miembro'}</small></div>
-        ${dueno && otro ? `<button class="btn chico rol" data-rol="${m.user_id}" data-a="${admin ? 'miembro' : 'admin'}">${admin ? 'Quitar admin' : 'Hacer admin'}</button>` : ''}
-        ${sacable ? `<button class="ic peligro" data-sacar="${m.user_id}" aria-label="Sacar a ${esc(m.apodo)}">✕</button>` : ''}</div>`; }).join('')}</div>
-      <button class="btn" id="b-cerrar">Listo</button>`);
-    $('b-cerrar').onclick = cerrar;
-    $('g-copiar').onclick = async () => {
-      try { await navigator.clipboard.writeText(link); $('g-copiar').textContent = '¡Copiado!'; }
-      catch (_) { $('g-link').select(); $('g-copiar').textContent = 'Copialo a mano'; }
-    };
-    $('g-nuevo').onclick = () => confirmar('El link y el código de ahora dejan de andar. Los que ya están en el álbum siguen adentro.', 'Cambiar código',
-      async () => { await intentar(S.nuevoCodigo()); grupo(); });
-    modal().querySelectorAll('[data-rol]').forEach(b => b.onclick = () => {
-      const uid = b.dataset.rol, rol = b.dataset.a;
-      confirmar(rol === 'admin' ? `¿Hacer admin a ${S.apodo(uid)}? Va a poder usar el modo diseño e invitar y sacar gente.` : `¿Quitarle el admin a ${S.apodo(uid)}?`,
-        rol === 'admin' ? 'Hacer admin' : 'Quitar admin', async () => { await intentar(S.cambiarRol(uid, rol)); grupo(); });
-    });
-    modal().querySelectorAll('[data-sacar]').forEach(b => b.onclick = () => {
-      const uid = b.dataset.sacar;
-      confirmar(`¿Sacar a ${S.apodo(uid)} del álbum? Sus figuritas quedan.`, 'Sacar', async () => { await intentar(S.sacar(uid)); grupo(); });
-    });
-  }
-
-  function ajustes() {
-    cerrar(); const yo = S.yo() || {};
-    panel(`<h4 id="ph">Ajustes</h4>
-      ${campo('a-apodo', 'Tu apodo', yo.apodo || '', 30)}
-      <button class="btn pri" id="a-ok">Guardar apodo</button>
-      ${UI.alCambiarAlbum ? '<button class="btn" id="a-album">Cambiar de álbum</button>' : ''}
-      <button class="btn peligro" id="a-salir">Cerrar sesión</button>
-      <button class="btn" id="b-cerrar">Listo</button>`);
-    $('b-cerrar').onclick = cerrar;
-    $('a-ok').onclick = () => { const ap = val('a-apodo'); if (!ap) return; intentar(S.cambiarApodo(ap)); cerrar(); };
-    if ($('a-album')) $('a-album').onclick = () => { cerrar(); UI.alCambiarAlbum(); };
-    $('a-salir').onclick = () => { cerrar(); UI.alSalir(); };
   }
 
   /* Cargar fotos y armar el sobre */
@@ -565,7 +548,7 @@
     $('puntos').onclick = e => { const b = e.target.closest('[data-p]'); if (b) irA(+b.dataset.p); };
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { if (modal().innerHTML) (panel.alCerrar || cerrar)(); return; }
-      if (modal().innerHTML || $('capa').innerHTML || $('app').hidden || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (modal().innerHTML || $('capa').innerHTML || $('app').hidden || $('p-album').hidden || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (e.key === 'ArrowRight') irA(UI.actual + 1); if (e.key === 'ArrowLeft') irA(UI.actual - 1);
     });
     let x0 = null, y0 = null; const escena = $('escena');
@@ -593,10 +576,8 @@
       UI.modoDis = !UI.modoDis && S.esAdmin();
       $('b-modo').setAttribute('aria-pressed', UI.modoDis); $('modo').hidden = !UI.modoDis; pintar();
     };
-    $('b-ajustes').onclick = ajustes;
     $('b-colores').onclick = colores;
     $('b-paginas').onclick = paginas;
-    $('b-grupo').onclick = grupo;
     $('b-cargar').onclick = armarSobre;
     $('tira').onclick = e => { const s = e.target.closest('[data-sobre]'); if (s) abrirSobre(s.dataset.sobre); };
     $('b-asa').onclick = () => cajon(!cajonAbierto);
@@ -605,5 +586,5 @@
 
   window.UI = UI;
   window.Vistas = { login, bienvenida, elegirAlbum, cargando, errorCarga, mostrarAlbum, pintar, pintarMano, irA, elegir, pegar,
-    editarCarta, et, puede, toast, iniciarEventos, libro };
+    editarCarta, et, puede, toast, iniciarEventos, libro, verLugar };
 })();

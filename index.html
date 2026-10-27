@@ -24,18 +24,17 @@
 <div id="pantalla"><p class="meta centro">Abriendo…</p></div>
 
 <div id="app" hidden>
+ <div class="p-album" id="p-album">
   <header class="barra">
     <h1 id="tit">Álbum de los Lugares</h1>
     <span class="contador" id="cont"></span>
     <button class="btn-dis" id="b-modo" aria-pressed="false" hidden>Diseño</button>
-    <button class="btn-ic" id="b-ajustes" aria-label="Ajustes">⚙</button>
   </header>
   <div class="prog" aria-hidden="true"><i id="bar"></i></div>
   <div class="modo" id="modo" hidden>
     <span>Modo diseño: tocá la tapa, el título de una sección o un lugar para editarlo.</span>
     <button id="b-paginas">Páginas</button>
     <button id="b-colores">Colores</button>
-    <button id="b-grupo">Grupo</button>
   </div>
 
   <main class="escena" id="escena">
@@ -62,6 +61,9 @@
     <div class="puntos" id="puntos"></div>
     <button class="flecha" id="sig" aria-label="Página siguiente">›</button>
   </nav>
+ </div>
+  <div class="seccion" id="seccion" hidden></div>
+  <nav class="tabs" id="tabs" aria-label="Secciones"></nav>
 </div>
 
 <div id="modal"></div>
@@ -70,11 +72,19 @@
 <script src="js/config.js"></script>
 <script src="vendor/supabase.js"></script>
 <script src="js/reglas.js"></script>
+<script src="js/formato.js"></script>
+<script src="js/calculo.js"></script>
+<script src="js/importar.js"></script>
 <script src="js/api.js"></script>
 <script src="js/fotos.js"></script>
 <script src="js/estado.js"></script>
 <script src="js/vistas.js"></script>
 <script src="js/arrastre.js"></script>
+<script src="js/cuentas.js"></script>
+<script src="js/pestanas.js"></script>
+<script src="js/vista-cuentas.js"></script>
+<script src="js/vista-grupo.js"></script>
+<script src="js/vista-panel.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

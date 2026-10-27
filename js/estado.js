@@ -6,7 +6,8 @@
     lema: 'Una selfie por lugar. Llenalo entre todos.', mono: '', acento: '#c9a96e', tapa: '#111217' };
   const POR_PAG = 6;
 
-  const E = { uid: null, albumId: null, album: null, miembros: [], paginas: [], lugares: [], sobres: [], figuritas: [], a: null };
+  const E = { uid: null, duenoApp: false, albumId: null, album: null, miembros: [], paginas: [], lugares: [], sobres: [], figuritas: [],
+    personas: [], cuentas: [], gastos: [], pagos: [], perfiles: [], a: null };
   let oyente = () => {}, alExpulsar = () => {}, frame = 0, recienPend = null;
 
   function recalcular() { E.a = Reglas.armar(E.paginas, E.lugares, E.figuritas); }
@@ -21,7 +22,9 @@
   /* Lecturas */
   const D = () => Object.assign({}, DIS, E.album && E.album.diseno);
   const yo = () => E.miembros.find(m => m.user_id === E.uid);
-  const esAdmin = () => (yo() || {}).rol === 'admin';
+  // El dueño de la app (tabla duenos) cuenta como admin de todos los álbumes, igual que en el servidor.
+  const esAdmin = () => (yo() || {}).rol === 'admin' || E.duenoApp;
+  // Creador de este álbum (no confundir con E.duenoApp)
   const esDueno = uid => !!E.album && E.album.creado_por === (uid || E.uid);
   const apodo = uid => { const m = E.miembros.find(x => x.user_id === uid); return m ? m.apodo : 'alguien que ya no está'; };
   const fig = id => E.figuritas.find(f => f.id === id);
@@ -48,9 +51,18 @@
     await Api.firmar(E.figuritas.map(miniPath)).catch(() => {});
   }
 
-  const clave = t => t === 'miembros' ? (r => r.album_id + '|' + r.user_id) : (r => r.id);
+  const clave = t => t === 'miembros' ? (r => r.album_id + '|' + r.user_id) : t === 'perfiles' ? (r => r.user_id) : (r => r.id);
+  // Pone o reemplaza filas que devolvió el servidor (por si el tiempo real llega antes o después)
+  function ponerFilas(t, filas) {
+    const k = clave(t);
+    filas.forEach(f => { const i = E[t].findIndex(x => k(x) === k(f)); if (i >= 0) E[t][i] = f; else E[t].push(f); });
+    cambio();
+    return filas[0];
+  }
+  function quitarFilas(t, pred) { E[t] = E[t].filter(x => !pred(x)); cambio(); }
   function aplicar(t, ev, nuevo, viejo) {
     if (t === 'albumes') { if (nuevo) E.album = nuevo; return cambio(); }
+    if (t === 'cuentas' && ev === 'DELETE') E.gastos = E.gastos.filter(g => g.cuenta_id !== viejo.id); // por si no llegan los borrados en cascada
     const lista = E[t], k = clave(t);
     if (ev === 'DELETE') {
       const i = lista.findIndex(r => k(r) === k(viejo));
@@ -157,7 +169,7 @@
   async function cambiarApodo(ap) { await Api.rpc('cambiar_apodo', { p_album: E.albumId, p_apodo: ap }); yo().apodo = ap; cambio(); }
 
   window.Estado = {
-    E, COLORES, DIS, cargar, aplicar, cambio, alCambiar: f => oyente = f, alSerExpulsado: f => alExpulsar = f,
+    E, COLORES, DIS, cargar, aplicar, cambio, ponerFilas, quitarFilas, alCambiar: f => oyente = f, alSerExpulsado: f => alExpulsar = f,
     D, yo, esAdmin, esDueno, apodo, fig, miniPath, mano, sobresCerrados, pegadaEn, puedeTirar,
     pegar, despegar, cambiarDestino, abrirSobre, tirar, armarSobre,
     guardarDiseno, guardarPagina, guardarLugar, agregarPagina, borrarPagina, ordenar,
