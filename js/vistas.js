@@ -54,7 +54,7 @@
     };
     const paso2 = () => {
       pantalla(`<h4 id="ph">Revisá tu mail</h4>
-        <div class="meta">Te mandamos un mail a <b>${esc(email)}</b>. Tocá el link desde este celu o escribí acá el código de 6 dígitos.</div>
+        <div class="meta">Te mandamos un mail a <b>${esc(email)}</b>. Tocá el link desde este celu o escribí acá el código que viene en el mail.</div>
         <form id="f" class="lista"><label for="l-cod">Código<input type="text" id="l-cod" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required></label>
         <button class="btn pri" id="l-ok">Entrar</button></form><p class="aviso" id="l-av" hidden></p>
         <div class="acciones"><button class="btn" id="l-otro"></button><button class="btn" id="l-mail2">Cambiar mail</button></div>`);
@@ -408,16 +408,22 @@
 
   function grupo() {
     cerrar();
-    const link = location.origin + location.pathname + '?codigo=' + E.album.codigo;
+    const link = location.origin + location.pathname + '?codigo=' + E.album.codigo, dueno = S.esDueno();
     panel(`<h4 id="ph">Grupo</h4><div class="meta">Mandales este link para que se sumen.</div>
       <label for="g-link">Link de invitación<input type="text" id="g-link" readonly value="${esc(link)}"></label>
       <div class="acciones"><button class="btn pri" id="g-copiar">Copiar</button><button class="btn" id="g-nuevo">Nuevo código</button></div>
       <div class="meta">Código: <b class="codigo">${esc(E.album.codigo)}</b></div>
       <div id="conf"></div>
       <div class="sub">Miembros (${E.miembros.length})</div>
-      <div class="lista">${E.miembros.slice().sort((a, b) => a.apodo.localeCompare(b.apodo)).map(m => `<div class="item">
-        <div class="nom"><b>${esc(m.apodo)}${m.user_id === E.uid ? ' (vos)' : ''}</b><small>${m.rol === 'admin' ? 'Admin' : 'Miembro'}</small></div>
-        ${m.user_id === E.uid ? '' : `<button class="ic peligro" data-sacar="${m.user_id}" aria-label="Sacar a ${esc(m.apodo)}">✕</button>`}</div>`).join('')}</div>
+      ${dueno ? '<div class="meta">Como dueño del álbum, sos el único que puede dar y quitar admins.</div>' : ''}
+      <div class="lista">${E.miembros.slice().sort((a, b) => a.apodo.localeCompare(b.apodo)).map(m => {
+        const otro = m.user_id !== E.uid, admin = m.rol === 'admin';
+        // Mismas reglas que el servidor: al dueño no lo saca nadie y a un admin solo lo saca el dueño.
+        const sacable = otro && !S.esDueno(m.user_id) && (!admin || dueno);
+        return `<div class="item">
+        <div class="nom"><b>${esc(m.apodo)}${otro ? '' : ' (vos)'}</b><small>${S.esDueno(m.user_id) ? 'Dueño · Admin' : admin ? 'Admin' : 'Miembro'}</small></div>
+        ${dueno && otro ? `<button class="btn chico rol" data-rol="${m.user_id}" data-a="${admin ? 'miembro' : 'admin'}">${admin ? 'Quitar admin' : 'Hacer admin'}</button>` : ''}
+        ${sacable ? `<button class="ic peligro" data-sacar="${m.user_id}" aria-label="Sacar a ${esc(m.apodo)}">✕</button>` : ''}</div>`; }).join('')}</div>
       <button class="btn" id="b-cerrar">Listo</button>`);
     $('b-cerrar').onclick = cerrar;
     $('g-copiar').onclick = async () => {
@@ -426,6 +432,11 @@
     };
     $('g-nuevo').onclick = () => confirmar('El link y el código de ahora dejan de andar. Los que ya están en el álbum siguen adentro.', 'Cambiar código',
       async () => { await intentar(S.nuevoCodigo()); grupo(); });
+    modal().querySelectorAll('[data-rol]').forEach(b => b.onclick = () => {
+      const uid = b.dataset.rol, rol = b.dataset.a;
+      confirmar(rol === 'admin' ? `¿Hacer admin a ${S.apodo(uid)}? Va a poder usar el modo diseño e invitar y sacar gente.` : `¿Quitarle el admin a ${S.apodo(uid)}?`,
+        rol === 'admin' ? 'Hacer admin' : 'Quitar admin', async () => { await intentar(S.cambiarRol(uid, rol)); grupo(); });
+    });
     modal().querySelectorAll('[data-sacar]').forEach(b => b.onclick = () => {
       const uid = b.dataset.sacar;
       confirmar(`¿Sacar a ${S.apodo(uid)} del álbum? Sus figuritas quedan.`, 'Sacar', async () => { await intentar(S.sacar(uid)); grupo(); });

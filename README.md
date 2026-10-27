@@ -72,10 +72,16 @@ Prueban las reglas puras (`js/reglas.js`): numeración, adónde puede ir cada fi
 
 Desde **Grupo** también podés sacar gente del álbum.
 
+## Admins y dueño
+
+- El **dueño** es quien creó el álbum. Es el único que puede **Hacer admin** o **Quitar admin** a otros, desde **Diseño → Grupo**.
+- Los admins usan el modo diseño, invitan y sacan miembros comunes. A otro admin solo lo saca el dueño, y al dueño no lo saca nadie.
+- Lo que la app no hace (borrar un álbum entero, borrar una cuenta) se hace en el panel de Supabase: **Table Editor → albumes** y **Authentication → Users**.
+
 ## Instalarla en el celu
 
 - **Android (Chrome)**: abrí el link, menú ⋮ → **Agregar a la pantalla principal** (o **Instalar app**).
-- **iPhone (Safari)**: abrí el link, botón **Compartir** → **Agregar a inicio**. Al entrar desde la app instalada, usá el **código de 6 dígitos** del mail (no el link).
+- **iPhone (Safari)**: abrí el link, botón **Compartir** → **Agregar a inicio**. Al entrar desde la app instalada, usá el **código** que viene en el mail (no el link).
 
 ## Cómo está hecha
 

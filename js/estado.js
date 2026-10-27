@@ -22,6 +22,7 @@
   const D = () => Object.assign({}, DIS, E.album && E.album.diseno);
   const yo = () => E.miembros.find(m => m.user_id === E.uid);
   const esAdmin = () => (yo() || {}).rol === 'admin';
+  const esDueno = uid => !!E.album && E.album.creado_por === (uid || E.uid);
   const apodo = uid => { const m = E.miembros.find(x => x.user_id === uid); return m ? m.apodo : 'alguien que ya no está'; };
   const fig = id => E.figuritas.find(f => f.id === id);
   const miniPath = f => f.foto_path.replace(/\.jpg$/, '_t.jpg');
@@ -151,13 +152,15 @@
   /* Grupo */
   async function nuevoCodigo() { E.album.codigo = await Api.rpc('nuevo_codigo', { p_album: E.albumId }); cambio(); }
   async function sacar(uid) { await Api.sacarMiembro(E.albumId, uid); E.miembros = E.miembros.filter(m => m.user_id !== uid); cambio(); }
+  const cambiarRol = (uid, rol) => { const m = E.miembros.find(x => x.user_id === uid);
+    return optimista(m, { rol }, () => Api.rpc('cambiar_rol', { p_album: E.albumId, p_user: uid, p_rol: rol })); };
   async function cambiarApodo(ap) { await Api.rpc('cambiar_apodo', { p_album: E.albumId, p_apodo: ap }); yo().apodo = ap; cambio(); }
 
   window.Estado = {
     E, COLORES, DIS, cargar, aplicar, cambio, alCambiar: f => oyente = f, alSerExpulsado: f => alExpulsar = f,
-    D, yo, esAdmin, apodo, fig, miniPath, mano, sobresCerrados, pegadaEn, puedeTirar,
+    D, yo, esAdmin, esDueno, apodo, fig, miniPath, mano, sobresCerrados, pegadaEn, puedeTirar,
     pegar, despegar, cambiarDestino, abrirSobre, tirar, armarSobre,
     guardarDiseno, guardarPagina, guardarLugar, agregarPagina, borrarPagina, ordenar,
-    nuevoCodigo, sacar, cambiarApodo
+    nuevoCodigo, sacar, cambiarRol, cambiarApodo
   };
 })();

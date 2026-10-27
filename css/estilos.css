@@ -317,3 +317,4 @@ button.item{width:100%;min-height:52px;text-align:left;color:var(--tinta)}
 /* El botón Editar se ve chico como en la demo, pero se puede tocar en 44 px de alto */
 .editar::after{content:"";position:absolute;inset:-7px -2px}
 .cab .editar{position:relative}
+.item .rol{min-height:44px;padding:0 10px;font-size:13px}

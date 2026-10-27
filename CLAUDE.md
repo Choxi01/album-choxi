@@ -18,6 +18,8 @@
 - Borrar una página: las figuritas pegadas ahí vuelven a "Sin pegar" como comodín (`cambiar_destino` a `libre` después de borrar). No se borran fotos.
 - Los sobres sin figuritas (todavía subiendo) no se muestran, para que nadie abra uno a medio armar.
 - La fecha de la selfie se muestra pero no se edita (no hay permiso de update en `figuritas`).
+- **Dueño** = `albumes.creado_por`. Solo él da y quita admins (RPC `cambiar_rol`, migración `2026-10-26-dar-y-quitar-admins.sql`); nadie saca al dueño y a un admin solo lo saca el dueño.
+- El código del mail en este proyecto es de 8 dígitos (Email OTP Length); la app acepta hasta 10, por eso los textos no dicen el largo.
 - Si alguien está en varios álbumes, entra directo al último (`album_choxi_album` en localStorage); "Cambiar de álbum" en Ajustes.
 - Service worker solo fuera de localhost. Al cambiar archivos, subir `VERSION` en `sw.js`.
 
