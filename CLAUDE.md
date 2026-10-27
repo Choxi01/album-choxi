@@ -6,8 +6,8 @@
 
 ## Estructura
 - `index.html`, `css/estilos.css` (CSS de la demo + agregados al final).
-- `js/` scripts clásicos sin módulos, se comparten por `window.X`, en este orden: `config` → `vendor/supabase` → `reglas` → `formato` → `calculo` → `importar` → `api` → `fotos` → `estado` → `vistas` → `arrastre` → `cuentas` → `pestanas` → `vista-cuentas` → `vista-grupo` → `vista-panel` → `app`.
-- Pestañas abajo: Álbum (`vistas.js`) · Cuentas · Grupo · Panel. Las tres últimas se registran en `Pestanas` con `{ html, acciones }` (botones con `data-a`) y se redibujan enteras; si hay un formulario abierto o estás escribiendo, el cambio en vivo espera a que lo cierres.
+- `js/` scripts clásicos sin módulos, se comparten por `window.X`, en este orden: `config` → `vendor/supabase` → `reglas` → `formato` → `calculo` → `importar` → `api` → `fotos` → `estado` → `vistas` → `vista-post` → `arrastre` → `cuentas` → `pestanas` → `vista-cuentas` → `vista-grupo` → `vista-panel` → `app`.
+- Pestañas abajo: Álbum (`vistas.js`; el post de una figurita en `vista-post.js`) · Cuentas · Grupo · Panel. Las tres últimas se registran en `Pestanas` con `{ html, acciones }` (botones con `data-a`) y se redibujan enteras; si hay un formulario abierto o estás escribiendo, el cambio en vivo espera a que lo cierres.
 - `supabase/schema.sql` ya aplicado. Cambios nuevos: `supabase/migraciones/AAAA-MM-DD-descripcion.sql`, **los aplica el usuario**, nunca vos.
 - Tests: `node tests/reglas.test.js`, `node tests/calculo.test.js`, `node tests/importar.test.js`. Local: `npx serve -l 3000 .`
 
@@ -31,6 +31,10 @@
 - **Salida ↔ lugar**: `cuentas.lugar_id`. El detalle del lugar muestra los gastos o "Cargar gastos de esta salida"; la cuenta tiene "Ver en el álbum" (resalta el lugar 3 s).
 - Google: `signInWithOAuth` con `redirectTo` = URL de la app; el `?codigo=` se guarda en `sessionStorage` para no perderlo en la vuelta.
 - Borrar álbum (Panel): primero las fotos del Storage de a 100, después `panel_borrar_album`.
+- **Post de la figurita** (`vista-post.js`, migración `2026-10-26-post-comentarios.sql`): tocar una figurita pegada abre el post (foto grande entera, descripción, comentarios, menú ⋯ con "Ver gastos de esta salida" —la cuenta enlazada más reciente— y "Despegar"). En modo diseño se abre el panel de siempre para nombrar el lugar. Se pasa por las figuritas pegadas en el orden del álbum; al cerrar queda en la página de la última vista. Escape / "atrás" (pushState) cierran primero el menú o la edición. Se redibuja por partes para no perder lo que estás escribiendo.
+- **Descripción** (`figuritas.descripcion`, hasta 280): solo por RPC `editar_descripcion`; la cambia quien subió la foto o un admin ("+ Agregar" solo lo ve quien la subió). Optimista.
+- **Comentarios** (tabla `comentarios`, 1 a 300): todos los miembros leen y comentan con `insert` directo (id armado en el celu, así el tiempo real no lo duplica); borra el autor o un admin (0 filas = "No tenés permiso"); no se editan. Al abrir el álbum se cargan solo `id, figurita_id` (para los globitos); el texto se pide al abrir el post. Al despegar se mantienen; al tirar la figurita se borran en cascada.
+- El botón "Cargar gastos de esta salida" ya no existe: una salida se enlaza con "Lugar del álbum" en el formulario de Cuentas.
 
 ## Diseño
 Tema único de noche, tokens en `:root` de `estilos.css` (mesa `#0a0b0f`, hoja `#14151b`, acento `#c9a96e` y tapa `#111217` editables; debe `#ff6b5e`, cobra `#6fbf8f`; el texto de Saldar va en un ticket de papel claro). Botones ≥44 px (los puntitos de página son 32×44), zonas seguras, `prefers-reduced-motion`, confirmaciones dentro de la pantalla (sin `alert`/`confirm`).
@@ -38,6 +42,7 @@ Tema único de noche, tokens en `:root` de `estilos.css` (mesa `#0a0b0f`, hoja `
 ## Estado
 V1 escrita y probada contra el Supabase real (26/10/2026): crear álbum, sobre con 2 fotos (rotación EXIF ok), abrir, pegar arrastrando, detalle, despegar, editar destino, rechazo del servidor con vuelta atrás, borrar página → comodín, reordenar, nuevo código, apodo, tirar figurita (borra archivos), expulsión. En vivo probado con dos pestañas de la misma cuenta.
 Fase 2 (Cuentas, Grupo, Panel) probada a 390 px contra el Supabase real (26/10/2026), en un álbum de prueba ya borrado: salida enlazada a un lugar con 3 gastos (uno pagado por un invitado), saldar con ✓ Pasó y Deshacer, ticket, Ver en el álbum, errores del servidor tal cual. Segundo usuario simulado por SQL: no puede editar gastos ajenos y sus cambios llegan en vivo (el trigger borra los pagos). Importar: emparejar, cuenta que falla sin cortar el resto, invitado nuevo. Panel: resumen, cambiar rol, sacar de todos, duplicados, borrar álbum con fotos.
+Post de figurita probado a 390 px contra el Supabase real (26/10/2026), en un álbum de prueba ya borrado: foto vertical y horizontal enteras, agregar/editar descripción (escapada), comentar y borrar, segundo usuario simulado por SQL (su comentario y su borrado llegan en vivo con globito, no puede editar mi descripción ni borrar mi comentario), Ver gastos, despegar desde ⋯ y volver a pegar con descripción y comentario intactos, atrás/Escape.
 Sin probar todavía: **entrar con Google** (falta configurarlo en Google Cloud y Supabase, ver README), unirse con código desde **otra cuenta real** (necesita SMTP propio), la app instalada en iPhone/Android y el modo sin conexión (el service worker solo corre fuera de localhost).
 
 ## Pendientes (fuera de la V1)
