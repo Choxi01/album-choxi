@@ -1,6 +1,6 @@
 // Service worker: guarda solo los archivos de la app para que abra sin conexión.
 // Las llamadas a Supabase (datos y fotos) nunca se guardan. Al cambiar cualquier archivo, subí VERSION.
-const VERSION = 'album-choxi-v3';
+const VERSION = 'album-choxi-v4';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -14,6 +14,7 @@ const ARCHIVOS = [
   'js/fotos.js',
   'js/estado.js',
   'js/vistas.js',
+  'js/vista-post.js',
   'js/arrastre.js',
   'js/cuentas.js',
   'js/pestanas.js',

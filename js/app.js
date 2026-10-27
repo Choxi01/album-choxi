@@ -61,7 +61,7 @@
   }
 
   Estado.E.uid = null;
-  Estado.alCambiar(recien => { Vistas.pintar(recien); Pestanas.alCambiarDatos(); });
+  Estado.alCambiar(recien => { Vistas.pintar(recien); VistaPost.pintar(); Pestanas.alCambiarDatos(); });
   Estado.alSerExpulsado(() => { Vistas.toast('Te sacaron de ese álbum.'); entrar(); });
   UI.alSalir = () => Api.salir();
   UI.abrirAlbum = id => abrirAlbum(id);

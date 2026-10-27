@@ -310,12 +310,6 @@
   // Desde el álbum
   window.VistaCuentas = {
     abrirCuenta(id) { U.activa = id; U.sub = 'gastos'; U.form = null; U.salida = null; Pestanas.ir('cuentas'); },
-    salidaDeLugar(lid) {
-      const r = R.buscar(S.E.a, lid), yo = K.yoId();
-      U.sub = 'gastos'; U.form = null;
-      U.salida = { nombre: (r && r.l.nombre) || '', fecha: F.hoy(), miembros: yo ? [yo] : [], lugar_id: lid };
-      Pestanas.ir('cuentas');
-    },
     reiniciar() { Object.assign(U, { sub: 'gastos', activa: null, form: null, salida: null, verTodas: false, conf: null }); }
   };
 })();

@@ -7,6 +7,7 @@
   const hex = v => /^#[0-9a-f]{6}$/i.test(v);
   const rot = n => ((n * 37) % 7 - 3) * .5;
   const bg = u => u ? `background-image:url('${u}')` : '';
+  const GLOBO = '<svg viewBox="0 0 24 24"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3.5 20l1.2-4.1A8.5 8.5 0 1 1 20.5 11.5z"/></svg>';
   const PRESETS = [
     { n: 'Noche dorada', acento: '#c9a96e', tapa: '#111217' },
     { n: 'Plata', acento: '#c3c8d2', tapa: '#0f1115' },
@@ -29,7 +30,7 @@
 
   /* ───────── Pantallas fuera del álbum ───────── */
   function pantalla(html) {
-    $('app').hidden = true; cerrar(); $('capa').innerHTML = '';
+    $('app').hidden = true; cerrar(); $('capa').innerHTML = ''; VistaPost.quitar();
     $('pantalla').hidden = false;
     $('pantalla').innerHTML = `<div class="panel caja"><div class="mono chico" aria-hidden="true">AC</div>${html}</div>`;
   }
@@ -152,9 +153,9 @@
     const cel = sec.lugares.map(l => {
       const n = R.numero(A(), l.id), f = S.pegadaEn(l.id);
       if (f) {
-        hechas++;
-        return `<button class="figu${s.brillante ? ' brillante' : ''}${recien === l.id ? ' recien' : ''}${UI.resaltar === l.id ? ' resaltado' : ''}" style="--c:${s.color};--r:${rot(n)}deg" data-id="${l.id}" aria-label="Figurita ${n}: ${esc(l.nombre || 'sin nombre')}">
-          <span class="foto" style="${bg(mini(f))}"></span>
+        hechas++; const nc = S.nComs(f.id);
+        return `<button class="figu${s.brillante ? ' brillante' : ''}${recien === l.id ? ' recien' : ''}${UI.resaltar === l.id ? ' resaltado' : ''}" style="--c:${s.color};--r:${rot(n)}deg" data-id="${l.id}" aria-label="Figurita ${n}: ${esc(l.nombre || 'sin nombre')}${nc ? `, ${nc} ${nc === 1 ? 'comentario' : 'comentarios'}` : ''}">
+          <span class="foto" style="${bg(mini(f))}"></span>${nc ? `<span class="burbuja" aria-hidden="true">${GLOBO}${nc}</span>` : ''}
           <span class="pl"><span class="n">${n}</span><span class="t">${esc(l.nombre || 'Sin nombre')}</span></span></button>`;
       }
       const sin = !l.nombre, marca = cs ? (puede(cs, l.id) ? ' destino' : ' apagar') : '';
@@ -287,10 +288,11 @@
   }
   function avisar(t) { cerrar(); panel(`<h4 id="ph">Atención</h4><p style="margin:0">${esc(t)}</p><button class="btn" id="b-cerrar">Entendido</button>`); $('b-cerrar').onclick = cerrar; }
 
-  // Detalle de un lugar: foto grande, quién la subió y quién la pegó. En modo diseño, el nombre del lugar.
+  // Lugar vacío: qué se puede pegar ahí. En modo diseño, el nombre del lugar. Con figurita pegada y fuera del modo diseño se abre el post.
   function abrir(lid) {
     cerrar(); const r = R.buscar(A(), lid); if (!r) return;
     const { l, n } = r, f = S.pegadaEn(lid), dis = UI.modoDis;
+    if (f && !dis) return VistaPost.abrir(f.id);
     const ok = f ? [] : S.mano().filter(c => puede(c, lid));
     panel(`${f ? `<div class="grande" id="grande" style="${bg(mini(f))}" role="img" aria-label="Selfie en ${esc(l.nombre || 'lugar sin nombre')}"></div>` : ''}
       <h4 id="ph">N.º ${n} · ${esc(l.nombre || 'Sin nombre')}</h4>
@@ -299,17 +301,15 @@
       ${dis ? `<div class="sub">Modo diseño</div>${campo('in-lugar', 'Nombre del lugar', l.nombre, 40, 'Ej: Costanera')}${campo('in-zona', 'Detalle', l.detalle, 40, 'Ej: Asunción')}` : ''}
       ${f ? '' : ok.length ? `<div class="sub">Podés pegar acá</div><div class="tira" style="min-height:0">${ok.map(c => miniHTML(c, 'data-pegar')).join('')}</div>`
         : `<p class="meta" style="margin:0">No hay figuritas sin pegar para este lugar. Cargá fotos con el botón + para armar un sobre.</p>`}
-      ${gastosDeLugar(lid)}
+      ${f ? '' : gastosDeLugar(lid)}
       <div class="acciones">
         ${dis ? '<button class="btn" id="b-guardar">Guardar</button>' : ''}
-        ${f ? '<button class="btn peligro" id="b-despegar">Despegar</button>' : ''}
         <button class="btn chico" id="b-cerrar" aria-label="Cerrar">✕</button></div>
       <div id="conf"></div>`);
     const guardar = () => dis && intentar(S.guardarLugar(lid, { nombre: val('in-lugar'), detalle: val('in-zona') }));
     modal().querySelectorAll('[data-pegar]').forEach(b => b.onclick = () => { guardar(); cerrar(); pegar(b.dataset.pegar, lid); });
     $('b-cerrar').onclick = cerrar;
     modal().querySelectorAll('[data-cuenta]').forEach(b => b.onclick = () => { cerrar(); VistaCuentas.abrirCuenta(b.dataset.cuenta); });
-    if ($('b-gastos')) $('b-gastos').onclick = () => { cerrar(); VistaCuentas.salidaDeLugar(lid); };
     if ($('b-guardar')) $('b-guardar').onclick = () => { guardar(); cerrar(); };
     if (f) {
       // Se ve la miniatura hasta que termina de bajar la foto grande.
@@ -318,15 +318,13 @@
         im.onload = () => { const g = $('grande'); if (g) g.style.backgroundImage = `url('${u}')`; };
         im.src = u;
       }).catch(() => {});
-      $('b-despegar').onclick = () => confirmar(`¿Despegar la figurita ${n}? Vuelve abajo, a las figuritas sin pegar.`, 'Despegar',
-        () => { cerrar(); intentar(S.despegar(f.id)); });
     }
   }
 
-  // Salidas de Cuentas enlazadas a este lugar
+  // Salidas de Cuentas enlazadas a este lugar (se enlazan desde el formulario de Cuentas)
   function gastosDeLugar(lid) {
     const cs = Cuentas.deLugar(lid);
-    if (!cs.length) return '<button class="btn" id="b-gastos">Cargar gastos de esta salida</button>';
+    if (!cs.length) return '';
     const total = cs.reduce((t, c) => t + Cuentas.total(c), 0);
     return `<div class="sub">Gastos de esta salida · ${esc(Formato.gs(total))}</div><div class="lista">${cs.map(c =>
       `<button class="item" data-cuenta="${c.id}"><span class="nom"><b>${esc(c.nombre)}</b><small>${esc(Formato.gs(Cuentas.total(c)))} · ${c.gastos.length} ${c.gastos.length === 1 ? 'gasto' : 'gastos'}</small></span><span class="codigo">Ver cuenta ›</span></button>`).join('')}</div>`;
@@ -548,7 +546,7 @@
     $('puntos').onclick = e => { const b = e.target.closest('[data-p]'); if (b) irA(+b.dataset.p); };
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { if (modal().innerHTML) (panel.alCerrar || cerrar)(); return; }
-      if (modal().innerHTML || $('capa').innerHTML || $('app').hidden || $('p-album').hidden || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      if (modal().innerHTML || $('capa').innerHTML || $('post').innerHTML || $('app').hidden || $('p-album').hidden || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
       if (e.key === 'ArrowRight') irA(UI.actual + 1); if (e.key === 'ArrowLeft') irA(UI.actual - 1);
     });
     let x0 = null, y0 = null; const escena = $('escena');
