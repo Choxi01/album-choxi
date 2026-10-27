@@ -7,7 +7,7 @@
   const POR_PAG = 6;
 
   const E = { uid: null, duenoApp: false, albumId: null, album: null, miembros: [], paginas: [], lugares: [], sobres: [], figuritas: [],
-    personas: [], cuentas: [], gastos: [], pagos: [], perfiles: [], a: null };
+    personas: [], cuentas: [], gastos: [], pagos: [], comentarios: [], perfiles: [], a: null };
   let oyente = () => {}, alExpulsar = () => {}, frame = 0, recienPend = null;
 
   function recalcular() { E.a = Reglas.armar(E.paginas, E.lugares, E.figuritas); }
@@ -38,6 +38,12 @@
     .map(s => ({ s, figs: E.figuritas.filter(f => f.sobre_id === s.id) })).filter(x => x.figs.length);
   const pegadaEn = lid => E.a.ocupados.get(lid);
   const puedeTirar = f => esAdmin() || f.subida_por === E.uid;
+  // La descripción la cambia quien subió la foto o un admin; un comentario lo borra su autor o un admin (igual que en el servidor).
+  const puedeDescribir = puedeTirar;
+  const puedeBorrarCom = c => esAdmin() || c.user_id === E.uid;
+  const nComs = fid => E.comentarios.reduce((n, c) => n + (c.figurita_id === fid), 0);
+  // Ordenados por hora. Si alguno no tiene texto (vino de la carga liviana), hay que pedirlos con traerComentarios.
+  const comentarios = fid => E.comentarios.filter(c => c.figurita_id === fid).sort(porFecha);
 
   async function firmarMinis() {
     if (await Api.firmar(E.figuritas.map(miniPath))) cambio();
@@ -96,8 +102,9 @@
 
   async function tirar(fid) {
     const f = fig(fid), i = E.figuritas.indexOf(f);
-    E.figuritas.splice(i, 1); cambio();
-    try { await Api.borrar('figuritas', fid); } catch (e) { E.figuritas.push(f); cambio(); throw e; }
+    const coms = E.comentarios.filter(c => c.figurita_id === fid);
+    E.figuritas.splice(i, 1); E.comentarios = E.comentarios.filter(c => c.figurita_id !== fid); cambio();
+    try { await Api.borrar('figuritas', fid); } catch (e) { E.figuritas.push(f); E.comentarios.push(...coms); cambio(); throw e; }
     Api.borrarArchivos([f.foto_path, miniPath(f)]).catch(() => {});
   }
 
@@ -125,6 +132,32 @@
       if (sobre) await Api.borrar('sobres', sobre.id).catch(() => {});
       throw new Error(/conexión/.test(e.message) ? e.message : 'No se pudo armar el sobre. Probá de nuevo.');
     }
+  }
+
+  /* Post de la figurita: descripción y comentarios */
+  const describir = (fid, texto) => optimista(fig(fid), { descripcion: texto.trim() },
+    () => Api.rpc('editar_descripcion', { p_figurita: fid, p_texto: texto }));
+
+  async function traerComentarios(fid) {
+    const filas = await Api.comentariosDe(fid), ids = new Set(filas.map(c => c.id));
+    // Se van los que ya no están en el servidor; los que estoy publicando (tienen texto) se quedan.
+    E.comentarios = E.comentarios.filter(c => c.figurita_id !== fid || ids.has(c.id) || c.texto != null && c.user_id === E.uid);
+    filas.length ? ponerFilas('comentarios', filas) : cambio();
+  }
+  // Se muestra al instante con un id hecho acá, así el tiempo real no lo duplica.
+  async function comentar(fid, texto) {
+    const c = { id: crypto.randomUUID(), album_id: E.albumId, figurita_id: fid, user_id: E.uid, texto: texto.trim(), created_at: new Date().toISOString() };
+    E.comentarios.push(c); cambio();
+    try { ponerFilas('comentarios', await Api.insertar('comentarios', { id: c.id, album_id: c.album_id, figurita_id: fid, texto: c.texto })); }
+    catch (e) { quitarFilas('comentarios', x => x.id === c.id); throw e; }
+    return c.id;
+  }
+  async function borrarComentario(id) {
+    const c = E.comentarios.find(x => x.id === id); if (!c) return;
+    quitarFilas('comentarios', x => x.id === id);
+    let filas;
+    try { filas = await Api.borrar('comentarios', id); } catch (e) { E.comentarios.push(c); cambio(); throw e; }
+    if (!filas.length) { E.comentarios.push(c); cambio(); throw new Error('No tenés permiso para borrar este comentario.'); }
   }
 
   /* Diseño (solo admin) */
@@ -171,6 +204,7 @@
   window.Estado = {
     E, COLORES, DIS, cargar, aplicar, cambio, ponerFilas, quitarFilas, alCambiar: f => oyente = f, alSerExpulsado: f => alExpulsar = f,
     D, yo, esAdmin, esDueno, apodo, fig, miniPath, mano, sobresCerrados, pegadaEn, puedeTirar,
+    puedeDescribir, puedeBorrarCom, nComs, comentarios, describir, traerComentarios, comentar, borrarComentario,
     pegar, despegar, cambiarDestino, abrirSobre, tirar, armarSobre,
     guardarDiseno, guardarPagina, guardarLugar, agregarPagina, borrarPagina, ordenar,
     nuevoCodigo, sacar, cambiarRol, cambiarApodo

@@ -2,7 +2,9 @@
 (function () {
   const C = window.CONFIG;
   const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { auth: { persistSession: true, detectSessionInUrl: true } });
-  const TABLAS = ['albumes', 'miembros', 'paginas', 'lugares', 'sobres', 'figuritas', 'personas', 'cuentas', 'gastos', 'pagos'];
+  const TABLAS = ['albumes', 'miembros', 'paginas', 'lugares', 'sobres', 'figuritas', 'personas', 'cuentas', 'gastos', 'pagos', 'comentarios'];
+  // De los comentarios se carga solo lo justo para los globitos; el texto se pide al abrir el post.
+  const COLUMNAS = { comentarios: 'id, figurita_id' };
 
   // Convierte el error de Supabase en un Error con texto en español.
   function falla(error) {
@@ -49,12 +51,13 @@
     const [album, perfiles, ...resto] = await Promise.all([
       ok(sb.from('albumes').select('*').eq('id', id).single()),
       ok(sb.from('perfiles').select('*')), // RLS deja ver solo los de gente con la que compartís grupo
-      ...TABLAS.slice(1).map(t => ok(sb.from(t).select('*').eq('album_id', id)))
+      ...TABLAS.slice(1).map(t => ok(sb.from(t).select(COLUMNAS[t] || '*').eq('album_id', id)))
     ]);
     const d = { album, perfiles };
     TABLAS.slice(1).forEach((t, i) => d[t] = resto[i]);
     return d;
   }
+  const comentariosDe = fid => ok(sb.from('comentarios').select('*').eq('figurita_id', fid).order('created_at'));
   const rpc = (nombre, args) => ok(sb.rpc(nombre, args));
 
   /* Escrituras directas (las cubre RLS) */
@@ -115,7 +118,7 @@
 
   window.Api = {
     usuario, enviarCodigo, verificar, entrarConGoogle, salir, alCambiarSesion,
-    misAlbumes, cargarTodo, rpc, insertar, actualizar, borrar, sacarMiembro, guardarPerfil,
+    misAlbumes, cargarTodo, comentariosDe, rpc, insertar, actualizar, borrar, sacarMiembro, guardarPerfil,
     subir, borrarArchivos, borrarFotosDe, verUrl, guardarLocal, firmar, escuchar, dejarDeEscuchar
   };
 })();
